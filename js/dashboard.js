@@ -221,7 +221,7 @@ exportarCSVBtn.addEventListener("click", async () => {
 "NumeroCuenta,Nombre,Generacion,Semestre,Periodo,Creditos,EstadoAcademico,DocumentoURL\n";
 
   data.forEach((alumno) => {
-    csv += `"${alumno.numero_cuenta || ""}","${alumno.nombre || ""}","${alumno.periodo || ""}","${alumno.semestre || ""}","${alumno.generacion || ""}","${alumno.creditos_acumulados || 0}","${alumno.estado_academico || ""}","${alumno.documento_url || ""}"\n`;
+    csv += `"${alumno.numero_cuenta || ""}","${alumno.nombre || ""}","${alumno.generacion || ""}","${alumno.semestre || ""}","${alumno.periodo || ""}","${alumno.creditos_acumulados || 0}","${alumno.estado_academico || ""}","${alumno.documento_url || ""}"\n`;
   });
 
   const blob = new Blob([csv], {

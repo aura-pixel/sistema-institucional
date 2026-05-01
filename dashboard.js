@@ -536,6 +536,12 @@ if (depurarGeneracionBtn) {
           `La generación ${generacion} fue depurada correctamente.`
         );
 
+        depurarGeneracionBtn.style.display =
+  "inline-block";
+
+  depurarGeneracionBtn.style.display =
+  "none";
+
         cargarAlumnos();
 
       } catch (err) {

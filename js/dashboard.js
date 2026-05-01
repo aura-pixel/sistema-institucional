@@ -184,7 +184,7 @@ const generacionesValidas =
     conteoGeneraciones
   ).filter(
     ([generacion, total]) =>
-      total >= 30
+      total >= 1
   );
 
 if (generacionesValidas.length) {

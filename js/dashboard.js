@@ -178,6 +178,35 @@ async function cargarAlumnos() {
     ),
   ].sort();
 
+  // =========================
+// REVISIÓN INSTITUCIONAL
+// =========================
+const anioActual =
+  new Date().getFullYear();
+
+const generacionesVencidas =
+  generacionesUnicas.filter(
+    (gen) => {
+      const anioGen =
+        parseInt(gen);
+
+      return (
+        !isNaN(anioGen) &&
+        anioActual - anioGen >= 4
+      );
+    }
+  );
+
+if (
+  generacionesVencidas.length
+) {
+  mostrarModalMensaje(
+    `Aviso: Las generaciones ${generacionesVencidas.join(
+      ", "
+    )} han cumplido 4 años o más. Se recomienda exportar, archivar y depurar sus registros.`
+  );
+}
+
   // Reiniciar filtro
   filtroGeneracion.innerHTML = `
     <option value="">

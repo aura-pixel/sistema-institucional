@@ -1,0 +1,152 @@
+<!-- documentos.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Subida de Documentos</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+
+<body>
+
+  <!-- NAV -->
+  <header class="top-nav">
+    <div class="nav-left">
+
+      <img
+        src="img/logo-to.png"
+        alt="Terapia Ocupacional"
+        class="nav-logo"
+      />
+
+      <div class="nav-text">
+        <h2>Terapia Ocupacional</h2>
+        <p>Facultad de Medicina · UAEMéx</p>
+      </div>
+
+    </div>
+  </header>
+
+  <main class="hero-section registro-layout">
+
+    <!-- PANEL IZQUIERDO -->
+    <section class="welcome-panel">
+
+      <span class="welcome-badge">
+        Paso 3 de 4
+      </span>
+
+      <h1>
+        Carga documental institucional
+      </h1>
+
+      <p>
+        Sube un único archivo PDF con toda tu documentación
+        oficial para validar tu expediente.
+      </p>
+
+      <div class="document-list">
+        <div class="doc-item">✔ Carnet IMSS</div>
+        <div class="doc-item">✔ Credencial escolar (ambos lados)</div>
+        <div class="doc-item">✔ INE (ambos lados)</div>
+        <div class="doc-item">✔ Vigencia de derechos</div>
+        <div class="doc-item">✔ Formato PDF único</div>
+      </div>
+
+      <!-- PROGRESO -->
+      <div class="progress-container progress-left">
+        <div class="progress-bar">
+          <div class="progress-step active">1</div>
+          <div class="progress-step active">2</div>
+          <div class="progress-step active">3</div>
+          <div class="progress-step">4</div>
+        </div>
+
+        <div class="progress-labels">
+          <span>Datos</span>
+          <span>Materias</span>
+          <span>Documentos</span>
+          <span>Resumen</span>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- PANEL DERECHO -->
+    <section class="login-card glass-card registro-premium-card documentos-card">
+
+      <div class="login-icon">
+        📄
+      </div>
+
+      <h2>Subida de documentos</h2>
+
+      <p class="subtitle">
+        Archivo PDF único · Máximo recomendado 15MB
+      </p>
+
+      <form id="documentosForm">
+
+        <!-- DROPZONE -->
+        <label
+          for="pdfFile"
+          class="upload-zone"
+          id="uploadZone"
+        >
+
+          <div class="upload-icon">
+            ⬆
+          </div>
+
+          <h3>Selecciona o arrastra tu PDF</h3>
+
+          <p>
+            Haz clic aquí para cargar tu expediente
+          </p>
+
+          <input
+            type="file"
+            id="pdfFile"
+            accept=".pdf"
+            hidden
+          />
+
+        </label>
+
+        <!-- NOMBRE -->
+        <div id="fileName" class="file-name-box">
+          Ningún archivo seleccionado
+        </div>
+
+        <!-- CHECK -->
+        <label class="custom-check">
+          <input
+            type="checkbox"
+            id="confirmacionDocs"
+          />
+
+          <span>
+            Confirmo que el archivo incluye toda la documentación requerida
+          </span>
+        </label>
+
+        <div id="errorMessage" class="error-message"></div>
+
+        <button type="submit" id="subirBtn" disabled>
+  Subir y continuar
+</button>
+
+      </form>
+
+    </section>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/documentos.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,101 @@
+<!-- bienvenida.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bienvenida | Sistema de Inscripción</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<!-- bienvenida.html -->
+<!-- REEMPLAZA TODO el body por esta versión UX PREMIUM -->
+
+<body>
+
+  <!-- NAV CAPSULA -->
+  <header class="top-nav">
+    <div class="nav-left">
+
+      <img
+        src="/assets/to.jpg"
+        alt="Terapia Ocupacional"
+        class="nav-logo"
+      />
+
+      <div class="nav-text">
+        <h2>Terapia Ocupacional</h2>
+        <p>Facultad de Medicina · UAEMéx</p>
+      </div>
+
+    </div>
+  </header>
+
+  <main class="hero-section">
+
+    <!-- PANEL IZQUIERDO -->
+    <section class="welcome-panel">
+
+      <span class="welcome-badge">
+        Requisitos documentales
+      </span>
+
+      <h1>
+        Antes de continuar
+      </h1>
+
+      <p>
+        Prepara un único archivo PDF con toda tu documentación
+        para agilizar tu proceso de inscripción.
+      </p>
+
+      <div class="document-list">
+        <div class="doc-item">✔ Carnet IMSS</div>
+        <div class="doc-item">✔ Credencial escolar (ambos lados)</div>
+        <div class="doc-item">✔ INE (ambos lados)</div>
+        <div class="doc-item">✔ Constancia de vigencia de derechos</div>
+      </div>
+
+    </section>
+
+    <!-- CARD DERECHA -->
+    <section class="login-card glass-card">
+
+      <div class="login-icon">
+        📄
+      </div>
+
+      <h2>Verificación previa</h2>
+
+      <p class="subtitle">
+        Confirma que cuentas con tu archivo completo
+      </p>
+
+      <form id="bienvenidaForm">
+
+        <label class="custom-check">
+          <input
+            type="checkbox"
+            id="confirmacion"
+          />
+
+          <span>
+            Confirmo que tengo listo mi archivo PDF completo
+          </span>
+        </label>
+
+        <div id="errorMessage" class="error-message"></div>
+
+        <button type="submit">
+          Continuar al registro
+        </button>
+
+      </form>
+
+    </section>
+
+  </main>
+
+  <script src="js/bienvenida.js"></script>
+
+</body>
+</html>

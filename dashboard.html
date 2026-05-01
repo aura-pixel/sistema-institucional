@@ -1,0 +1,335 @@
+<!-- dashboard.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel del Coordinador</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+
+
+<body>
+
+  <!-- NAV -->
+  <header class="top-nav">
+    <div class="nav-left">
+
+      <img
+        src="/assets/to.jpg"
+        alt="Terapia Ocupacional"
+        class="nav-logo"
+      />
+
+      <div class="nav-text">
+        <h2>Terapia Ocupacional</h2>
+        <p>Facultad de Medicina · UAEMéx</p>
+      </div>
+
+    </div>
+  </header>
+
+<main class="dashboard-main-layout">
+    <!-- PANEL IZQUIERDO -->
+    <section class="welcome-panel">
+
+      <span class="welcome-badge">
+        Panel institucional
+      </span>
+
+      <h1>
+        Gestión de alumnos
+      </h1>
+
+      <p>
+        Administra expedientes, consulta registros,
+        monitorea avances y exporta información académica.
+      </p>
+
+      <div class="document-list">
+        <div class="doc-item">✔ Seguimiento por alumno</div>
+        <div class="doc-item">✔ Consulta de documentos</div>
+        <div class="doc-item">✔ Exportación CSV</div>
+        <div class="doc-item">✔ Control institucional</div>
+      </div>
+
+    </section>
+
+    <!-- PANEL DERECHO -->
+<section class="glass-card dashboard-card">
+      <div class="login-icon">
+        👨‍💼
+      </div>
+
+      <h2>Panel del Coordinador</h2>
+
+      <p class="subtitle">
+        Gestión académica institucional
+      </p>
+
+      <p id="coordinadorBienvenida" class="dashboard-welcome"></p>
+
+      <!-- LOGIN -->
+      <div id="coordinadorLogin">
+
+        <form class="dashboard-login-form" autocomplete="off">
+
+          <div>
+            <label>Usuario</label>
+            <input
+              type="text"
+              id="coordUser"
+            />
+          </div>
+
+          <div>
+            <label>Contraseña</label>
+            <input
+              type="password"
+              id="coordPass"
+            />
+          </div>
+
+          <div id="loginError" class="error-message"></div>
+
+          <button
+            type="button"
+            id="loginBtn"
+          >
+            Ingresar
+          </button>
+
+          <button
+  type="button"
+  id="volverRegistroBtn"
+  class="secondary-btn volver-btn"
+>
+  Volver al registro de alumno
+</button>
+
+        </form>
+
+
+
+      </div>
+
+      <!-- DASHBOARD -->
+      <div
+  id="dashboardPanel"
+  style="display:none;"
+>
+
+  <!-- FILTROS -->
+  <div class="dashboard-filters">
+
+    <!-- Buscar alumno -->
+    <div class="dashboard-search-row">
+      <input
+        type="text"
+        id="busquedaAlumno"
+        placeholder="Buscar por número de cuenta o nombre..."
+      />
+    </div>
+
+    <!-- Generación -->
+    <select id="filtroGeneracion">
+      <option value="">
+        Todas las generaciones
+      </option>
+    </select>
+
+    <!-- Estado -->
+    <select id="filtroEstado">
+      <option value="">
+        Todos los estados
+      </option>
+
+      <option value="Activo">
+        Activo
+      </option>
+
+      <option value="Egresado">
+        Egresado
+      </option>
+
+      <option value="Archivado">
+        Archivado
+      </option>
+    </select>
+
+  </div>
+
+  <!-- STATS -->
+  <div
+    id="estadisticasDashboard"
+    class="creditos-box"
+  ></div>
+
+  <!-- GENERACIONES -->
+  <div class="dashboard-generation-box">
+
+    <h3>Gestión por generación</h3>
+
+    <div class="dashboard-actions">
+
+  <button
+    id="exportarCSVBtn"
+    class="tooltip-btn"
+    data-tooltip="Descarga todos los alumnos activos y generaciones registradas actualmente en un único archivo CSV general."
+  >
+    Descargar CSV general
+  </button>
+
+  <button
+    id="exportarGeneracionBtn"
+    class="tooltip-btn"
+    data-tooltip="Permite seleccionar una o varias generaciones específicas para exportarlas individualmente. Si eliges varias, podrán descargarse por separado o en ZIP."
+  >
+    Exportar generación
+  </button>
+
+  <button
+  id="archivarGeneracionBtn"
+  class="tooltip-btn"
+  data-tooltip="Marca generaciones egresadas como archivadas para liberar espacio operativo sin eliminar historial académico ni documentos."
+>
+  Archivar generación
+</button>
+
+  <button
+    id="cerrarSesionBtn"
+    class="tooltip-btn"
+    data-tooltip="Cierra la sesión del coordinador de forma segura."
+  >
+    Cerrar sesión
+  </button>
+
+</div>
+
+    <small>
+      Las generaciones egresadas pueden archivarse
+      para liberar almacenamiento documental.
+    </small>
+
+  </div>
+
+  <!-- TABLA -->
+  <div class="dashboard-table-wrapper">
+
+    <table class="dashboard-table">
+
+      <thead>
+        <tr>
+          <th>Número de cuenta</th>
+          <th>Nombre</th>
+          <th>Generación</th>
+          <th>Semestre</th>
+          <th>Periodo</th>
+          <th>Créditos</th>
+          <th>Estado</th>
+          <th>Documento</th>
+        </tr>
+      </thead>
+
+      <tbody id="tablaAlumnos"></tbody>
+
+    </table>
+
+  </div>
+
+</div>
+
+    </section>
+
+  </main>
+
+  <!-- MODAL GENERACIONES -->
+<div id="modalGeneraciones" class="modal-overlay hidden">
+  <div class="modal-box">
+    <h3>Exportar generación</h3>
+    <p>Selecciona una o más generaciones activas:</p>
+
+    <div id="listaGeneraciones" class="modal-generaciones-list"></div>
+
+    <div class="modal-actions">
+      <button id="cancelarModalBtn" class="secondary-btn">
+        Cancelar
+      </button>
+      <button id="confirmarExportacionBtn">
+        Exportar
+      </button>
+    </div>
+  </div>
+</div>
+
+<div
+  id="modalArchivar"
+  class="modal-overlay hidden"
+>
+  <div class="modal-box">
+
+    <h3>
+      Archivar / Desarchivar generaciones
+    </h3>
+
+    <p>
+      Selecciona generaciones activas para archivarlas o archivadas para reactivarlas.
+    </p>
+
+    <div class="modal-section">
+      <h4>Generaciones activas</h4>
+      <div id="listaArchivar"></div>
+    </div>
+
+    <div class="modal-section">
+      <h4>Generaciones archivadas</h4>
+      <div id="listaDesarchivar"></div>
+    </div>
+
+    <div class="modal-actions">
+      <button
+        id="confirmarArchivarBtn"
+      >
+        Archivar/ Desarchivar
+      </button>
+
+      <button
+        id="cancelarArchivarBtn"
+        type="button"
+      >
+        Cancelar
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ========================= -->
+<!-- MODAL MENSAJES GENERALES -->
+<!-- ========================= -->
+<div
+  id="modalMensaje"
+  class="modal-overlay hidden"
+>
+  <div class="modal-box">
+
+    <h3>
+      Aviso 
+    </h3>
+
+    <p id="modalMensajeTexto">
+      Aquí aparecerá el mensaje.
+    </p>
+
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="js/dashboard-generaciones.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/dashboard.js"></script>
+
+</body>
+
+</html>

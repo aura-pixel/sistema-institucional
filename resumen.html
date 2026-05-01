@@ -1,0 +1,122 @@
+<!-- resumen.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resumen Final</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+
+<body>
+
+  <!-- NAV -->
+  <header class="top-nav">
+    <div class="nav-left">
+
+      <img
+        src="/assets/to.jpg"
+        alt="Terapia Ocupacional"
+        class="nav-logo"
+      />
+
+      <div class="nav-text">
+        <h2>Terapia Ocupacional</h2>
+        <p>Facultad de Medicina · UAEMéx</p>
+      </div>
+
+    </div>
+  </header>
+
+  <main class="hero-section registro-layout">
+
+    <!-- PANEL IZQUIERDO -->
+    <section class="welcome-panel">
+
+      <span class="welcome-badge">
+        Paso 4 de 4
+      </span>
+
+      <h1>
+        Registro completado con éxito
+      </h1>
+
+      <p>
+        Tu expediente fue enviado correctamente.
+        Conserva esta información como referencia
+        de tu proceso académico.
+      </p>
+
+      <div class="document-list">
+        <div class="doc-item">✔ Datos personales registrados</div>
+        <div class="doc-item">✔ Materias guardadas</div>
+        <div class="doc-item">✔ PDF cargado</div>
+        <div class="doc-item">✔ Expediente enviado</div>
+      </div>
+
+      <!-- PROGRESO -->
+      <div class="progress-container progress-left">
+        <div class="progress-bar">
+          <div class="progress-step active">1</div>
+          <div class="progress-step active">2</div>
+          <div class="progress-step active">3</div>
+          <div class="progress-step active">4</div>
+        </div>
+
+        <div class="progress-labels">
+          <span>Datos</span>
+          <span>Materias</span>
+          <span>Documentos</span>
+          <span>Resumen</span>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- PANEL DERECHO -->
+    <section class="login-card glass-card registro-premium-card resumen-card">
+
+      <div class="login-icon success-icon">
+        ✓
+      </div>
+
+      <h2>Solicitud enviada</h2>
+
+      <p class="subtitle">
+        Revisa tu resumen final
+      </p>
+
+      <!-- RESUMEN -->
+      <div id="resumenContainer" class="resumen-container">
+      </div>
+
+      <!-- ACCIONES -->
+      <div class="resumen-actions">
+
+        <button
+          type="button"
+          id="descargarResumenBtn"
+          class="secondary-btn"
+        >
+          Descargar resumen
+        </button>
+
+        <button
+          id="finalizarBtn"
+          type="button"
+        >
+          Finalizar
+        </button>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/resumen.js"></script>
+
+</body>
+</html>

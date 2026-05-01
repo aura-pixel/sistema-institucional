@@ -1,0 +1,99 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema de Inscripción | Terapia Ocupacional UAEMéx</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<!-- index.html -->
+
+<body>
+
+  <!-- NAV CAPSULA -->
+  <header class="top-nav">
+    <div class="nav-left">
+
+      <img
+        src="/assets/to.jpg"
+        alt="Terapia Ocupacional"
+        class="nav-logo"
+      />
+
+      <div class="nav-text">
+        <h2>Terapia Ocupacional</h2>
+        <p>Facultad de Medicina · UAEMéx</p>
+      </div>
+
+    </div>
+
+    <button
+      type="button"
+      id="coordinadorBtn"
+      class="coordinador-nav-btn"
+    >
+      Acceso Coordinador
+    </button>
+  </header>
+
+  <!-- HERO -->
+  <main class="hero-section">
+
+    <section class="welcome-panel">
+      <span class="welcome-badge">Sistema de Inscripción</span>
+
+      <h1>
+        Bienvenido al portal de reinscripción
+      </h1>
+
+      <p>
+        Completa tu proceso académico de forma segura,
+        rápida y organizada.
+      </p>
+    </section>
+
+    <!-- LOGIN GLASS -->
+    <section class="login-card glass-card">
+
+      <div class="login-icon">
+        🎓
+      </div>
+
+      <h2>Ingreso de Alumno</h2>
+
+      <p class="subtitle">
+        Introduce tu número de cuenta
+      </p>
+
+      <form id="loginForm">
+
+        <label for="numeroCuenta">
+          Número de cuenta
+        </label>
+
+        <input
+          type="text"
+          id="numeroCuenta"
+          placeholder="Ej. 1710447"
+          maxlength="7"
+        />
+
+        <div id="errorMessage" class="error-message"></div>
+
+        <button type="submit">
+          Continuar
+        </button>
+
+      </form>
+
+    </section>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/main.js"></script>
+
+</body>
+</html>

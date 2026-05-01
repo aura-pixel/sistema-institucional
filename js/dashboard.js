@@ -166,6 +166,75 @@ async function cargarAlumnos() {
   alumnos = data;
   alumnosFiltrados = data;
 
+  const conteoGeneraciones = {};
+
+alumnos.forEach((alumno) => {
+  if (!alumno.generacion) return;
+
+  conteoGeneraciones[
+    alumno.generacion
+  ] =
+    (conteoGeneraciones[
+      alumno.generacion
+    ] || 0) + 1;
+});
+
+const generacionesValidas =
+  Object.entries(
+    conteoGeneraciones
+  ).filter(
+    ([generacion, total]) =>
+      total >= 30
+  );
+
+if (generacionesValidas.length) {
+  // Ordenar de más antigua a más reciente
+  generacionesValidas.sort(
+    (a, b) =>
+      parseInt(a[0]) -
+      parseInt(b[0])
+  );
+
+  // Primera cohorte institucional
+  const generacionBase =
+    generacionesValidas[0][0];
+
+  const anioActual =
+    new Date().getFullYear();
+
+  // Si ya pasaron 4 años o más
+  const depurarGeneracionBtn =
+  document.getElementById(
+    "depurarGeneracionBtn"
+  );
+  if (
+    anioActual -
+      parseInt(generacionBase) >=
+    4
+  ) {
+    const ultimaGeneracionAvisada =
+  localStorage.getItem(
+    "ultimaGeneracionAvisada"
+  );
+  depurarGeneracionBtn.style.display =
+  "inline-block";
+
+if (
+  ultimaGeneracionAvisada !==
+  generacionBase
+) {
+  mostrarModalMensaje(
+    `Aviso institucional: La generación ${generacionBase} ha cumplido su ciclo de 4 años. Se recomienda exportar, archivar y depurar su información.`
+  );
+
+  localStorage.setItem(
+    "ultimaGeneracionAvisada",
+    generacionBase
+  );
+}
+  }
+}  
+
   // Renderizar tabla
   renderTabla(alumnosFiltrados);
 
@@ -177,35 +246,6 @@ async function cargarAlumnos() {
         .filter(Boolean)
     ),
   ].sort();
-
-  // =========================
-// REVISIÓN INSTITUCIONAL
-// =========================
-const anioActual =
-  new Date().getFullYear();
-
-const generacionesVencidas =
-  generacionesUnicas.filter(
-    (gen) => {
-      const anioGen =
-        parseInt(gen);
-
-      return (
-        !isNaN(anioGen) &&
-        anioActual - anioGen >= 4
-      );
-    }
-  );
-
-if (
-  generacionesVencidas.length
-) {
-  mostrarModalMensaje(
-    `Aviso: Las generaciones ${generacionesVencidas.join(
-      ", "
-    )} han cumplido 4 años o más. Se recomienda exportar, archivar y depurar sus registros.`
-  );
-}
 
   // Reiniciar filtro
   filtroGeneracion.innerHTML = `
@@ -404,6 +444,113 @@ if (volverRegistroBtn) {
     () => {
       window.location.href =
         "index.html";
+    }
+  );
+}
+
+// =========================
+// DEPURAR GENERACIÓN
+// =========================
+if (depurarGeneracionBtn) {
+  depurarGeneracionBtn.addEventListener(
+    "click",
+    async () => {
+      const generacion =
+        prompt(
+          "Escribe la generación que deseas depurar definitivamente (ej. 2026):"
+        );
+
+      if (!generacion) return;
+
+      const confirmar =
+        confirm(
+          `ATENCIÓN:\n\nEsto eliminará permanentemente alumnos y documentos de la generación ${generacion}.\n\nAsegúrate de haber exportado su información antes.\n\n¿Deseas continuar?`
+        );
+
+      if (!confirmar) return;
+
+      try {
+        // Buscar alumnos de esa generación
+        const { data, error } =
+          await supabaseClient
+            .from("alumnos")
+            .select(
+              "numero_cuenta, documento_url"
+            )
+            .eq(
+              "generacion",
+              generacion
+            );
+
+        if (
+          error ||
+          !data.length
+        ) {
+          mostrarModalMensaje(
+            "No se encontraron alumnos para esa generación."
+          );
+          return;
+        }
+
+        // Eliminar documentos del storage
+        for (const alumno of data) {
+          if (
+            alumno.documento_url
+          ) {
+            const path =
+              alumno.documento_url
+                .split(
+                  "/documentos-alumnos/"
+                )[1];
+
+            if (path) {
+              await supabaseClient.storage
+                .from(
+                  "documentos-alumnos"
+                )
+                .remove([path]);
+            }
+          }
+        }
+
+        // Eliminar registros
+        const {
+          error: deleteError,
+        } =
+          await supabaseClient
+            .from("alumnos")
+            .delete()
+            .eq(
+              "generacion",
+              generacion
+            );
+
+        if (deleteError) {
+          mostrarModalMensaje(
+            "No se pudieron eliminar los registros."
+          );
+          return;
+        }
+
+        mostrarModalMensaje(
+          `La generación ${generacion} fue depurada correctamente.`
+        );
+
+        depurarGeneracionBtn.style.display =
+  "inline-block";
+
+  depurarGeneracionBtn.style.display =
+  "none";
+
+        cargarAlumnos();
+
+      } catch (err) {
+        console.error(err);
+
+        mostrarModalMensaje(
+          "Ocurrió un error durante la depuración."
+        );
+      }
     }
   );
 }

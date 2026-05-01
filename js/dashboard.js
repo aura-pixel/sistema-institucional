@@ -305,7 +305,7 @@ function renderTabla(lista) {
           <td>${alumno.nombre || ""}</td>
           <td>${alumno.generacion || "-"}</td>
           <td>${alumno.semestre || ""}</td>
-          <td>${alumno.generacion || ""}</td>
+          <td>${alumno.periodo || ""}</td>
           <td>${alumno.creditos_acumulados || 0}</td>
           <td>${alumno.estado_academico || "Activo"}</td>
           <td>

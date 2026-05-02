@@ -69,8 +69,8 @@ const busquedaAlumno =
 const MINIMO_COHORTE = 1;
 
 // MVP temporal
-const USER = "coordinador";
-const PASS = "admin123";
+const USER = "to";
+const PASS = "to2026";
 
 // =========================
 // ESTADO GLOBAL
@@ -295,7 +295,20 @@ async function cargarAlumnos() {
   }
 
   alumnos = data;
-  alumnosFiltrados = data;
+
+alumnosFiltrados =
+  filtroEstado.value ===
+  "Archivado"
+    ? data.filter(
+        (alumno) =>
+          alumno.estado_generacion ===
+          "archivada"
+      )
+    : data.filter(
+        (alumno) =>
+          alumno.estado_generacion !==
+          "archivada"
+      );
 
   // =========================
   // GENERACIONES ÚNICAS
@@ -519,7 +532,17 @@ async function cargarHistorialAlumno(
     return;
   }
 
-  if (!data || !data.length) {
+  const historialFiltrado =
+  data.filter(
+    (registro) =>
+      registro.semestre &&
+      registro.semestre !== "-"
+  );
+
+  if (
+  !historialFiltrado ||
+  !historialFiltrado.length
+) {
     tablaHistorial.innerHTML = `
       <tr>
         <td colspan="4">
@@ -531,8 +554,8 @@ async function cargarHistorialAlumno(
   }
 
   tablaHistorial.innerHTML =
-    data
-      .map(
+  historialFiltrado
+    .map(
         (registro) => `
           <tr>
             <td>${registro.semestre || "-"}</td>
@@ -567,9 +590,11 @@ if (cerrarSesionBtn) {
   );
 }
 
+
 // =========================
 // EXPORTAR CSV GENERAL
 // =========================
+
 if (exportarCSVBtn) {
   exportarCSVBtn.addEventListener(
     "click",
@@ -593,7 +618,7 @@ if (exportarCSVBtn) {
       }
 
       let csv =
-        "NumeroCuenta,Nombre,Generacion,Semestre,Periodo,CreditosTotales,SemestresCursados,MateriasRecursadas,EstatusFinal,EstadoAcademico,DocumentoURL\n";
+        "NumeroCuenta,Nombre,Generacion,Semestre,Periodo,CreditosTotales,SemestresCursados,MateriasRecursadas,EstatusFinal,DocumentoURL\n";
 
       for (const alumno of data) {
 
@@ -605,13 +630,14 @@ if (exportarCSVBtn) {
               "historial_academico"
             )
             .select(
-              "creditos_acumulados"
+              "creditos_acumulados, semestre, materias_json"
             )
             .eq(
               "numero_cuenta",
               alumno.numero_cuenta
             );
 
+        // Créditos totales
         const creditosTotales =
           historial?.reduce(
             (
@@ -623,45 +649,50 @@ if (exportarCSVBtn) {
                 0),
             0
           ) || 0;
-          csv += `"${alumno.numero_cuenta || ""}","${alumno.nombre || ""}","${alumno.generacion || ""}","${alumno.semestre || ""}","${alumno.periodo || ""}","${creditosTotales}","${semestresCursados}","${materiasRecursadas}","${estatusFinal}","${alumno.documento_url || ""}"\n`;
+
+        // Semestres cursados únicos
+        const semestresCursados =
+          new Set(
+            historial?.map(
+              (registro) =>
+                registro.semestre
+            )
+          ).size || 0;
+
+        // Materias recursadas
+        let materiasRecursadas = 0;
+
+        historial?.forEach(
+          (registro) => {
+            if (
+              registro.materias_json &&
+              Array.isArray(
+                registro.materias_json
+              )
+            ) {
+              materiasRecursadas +=
+                registro.materias_json.filter(
+                  (materia) =>
+                    materia.recursa ===
+                    "Sí"
+                ).length;
+            }
+          }
+        );
+
+        // Estatus final
+        const estatusFinal =
+          parseInt(
+            alumno.semestre
+          ) >= 8 &&
+          creditosTotales >= 380
+            ? "Egresado"
+            : alumno.estado_academico ||
+              "Activo";
+
+        // Fila CSV
+        csv += `"${alumno.numero_cuenta || ""}","${alumno.nombre || ""}","${alumno.generacion || ""}","${alumno.semestre || ""}","${alumno.periodo || ""}","${creditosTotales}","${semestresCursados}","${materiasRecursadas}","${estatusFinal}","${alumno.documento_url || ""}"\n`;
       }
-
-      // Semestres cursados únicos
-const semestresCursados =
-  new Set(
-    historial?.map(
-      (registro) =>
-        registro.semestre
-    )
-  ).size || 0;
-
-// Materias recursadas
-let materiasRecursadas = 0;
-
-historial?.forEach(
-  (registro) => {
-    if (
-      registro.materias_json &&
-      Array.isArray(
-        registro.materias_json
-      )
-    ) {
-      materiasRecursadas +=
-        registro.materias_json.filter(
-          (materia) =>
-            materia.recursa ===
-            true
-        ).length;
-    }
-  }
-);
-
-// Detección de egreso
-const estatusFinal =
-  parseInt(alumno.semestre) >= 8 &&
-  creditosTotales >= 380
-    ? "Egresado"
-    : "Activo";
 
       const blob =
         new Blob([csv], {
@@ -791,8 +822,18 @@ function aplicarFiltros() {
 
         const coincideEstado =
           !estado ||
-          alumno.estado_academico ===
-            estado;
+          (
+            estado ===
+            "Archivado"
+              ? alumno.estado_generacion ===
+                "archivada"
+              : estado ===
+                "Activo"
+              ? alumno.estado_generacion !==
+                "archivada"
+              : alumno.estado_academico ===
+                estado
+          );
 
         return (
           coincideTexto &&

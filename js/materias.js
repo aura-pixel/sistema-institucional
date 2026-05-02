@@ -14,6 +14,7 @@ if (!numeroCuenta) {
 }
 
 let materiasActuales = [];
+let semestreAlumnoActual = "";
 
 /* =========================
    CARGAR MATERIAS BASE
@@ -36,6 +37,9 @@ async function cargarMaterias() {
   }
 
   const semestre = alumno.semestre;
+  console.log("Semestre alumno desde Supabase:", alumno.semestre);
+console.log("Semestre guardado global:", semestreAlumnoActual);
+semestreAlumnoActual = semestre?.toString() || "";
   const materias = materiasPorSemestre[semestre];
 
   if (!materias || materias.length === 0) {
@@ -331,7 +335,7 @@ if (error) {
 
 // SOLO SI materias se guardó bien:
 const semestreActual =
-  materiasSeleccionadas[0]?.semestre?.toString() || "";
+  semestreAlumnoActual || "";
 
 const periodoActual =
   new Date().getFullYear() +

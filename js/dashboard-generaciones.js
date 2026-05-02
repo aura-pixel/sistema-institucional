@@ -163,70 +163,129 @@ if (confirmarExportacionBtn) {
                 generacion
             );
 
-          descargarCSVGeneracion(
-            alumnosGeneracion,
-            generacion
-          );
+          await descargarCSVGeneracion(
+  alumnosGeneracion,
+  generacion
+);
         }
 
         // VARIAS = ZIP
         else {
-          const zip =
-            new JSZip();
+  const zip =
+    new JSZip();
 
-          seleccionadas.forEach(
-            (generacion) => {
-              const alumnosGeneracion =
-                data.filter(
-                  (a) =>
-                    a.generacion ===
-                    generacion
-                );
+  for (const generacion of seleccionadas) {
 
-              let csv =
-                "NumeroCuenta,Nombre,Generacion,Semestre,Periodo,Creditos,EstadoAcademico,DocumentoURL\n";
+    const alumnosGeneracion =
+      data.filter(
+        (a) =>
+          a.generacion ===
+          generacion
+      );
 
-              alumnosGeneracion.forEach(
-                (alumno) => {
-                  csv += `"${alumno.numero_cuenta || ""}","${alumno.nombre || ""}","${alumno.generacion || ""}","${alumno.semestre || ""}","${alumno.periodo || ""}","${alumno.creditos_acumulados || 0}","${alumno.estado_academico || ""}","${alumno.documento_url || ""}"\n`;
-                }
-              );
+    let csv =
+      "NumeroCuenta,Nombre,Generacion,Semestre,Periodo,CreditosSemestre,CreditosAcumulados,MateriasRecursadas,EstatusFinal,DocumentoURL\n";
 
-              zip.file(
-                `generacion_${generacion}.csv`,
-                csv
-              );
+    for (const alumno of alumnosGeneracion) {
+
+      const {
+        data: historial,
+      } =
+        await supabaseClient
+          .from(
+            "historial_academico"
+          )
+          .select("*")
+          .eq(
+            "numero_cuenta",
+            alumno.numero_cuenta
+          )
+          .order(
+            "fecha_registro",
+            {
+              ascending: true,
             }
           );
 
-          const contenido =
-            await zip.generateAsync({
-              type: "blob",
-            });
+      // Sin historial
+      if (
+        !historial ||
+        !historial.length
+      ) {
+        csv += `"${alumno.numero_cuenta || ""}","${alumno.nombre || ""}","${alumno.generacion || ""}","${alumno.semestre || ""}","${alumno.periodo || ""}","0","0","0","${alumno.estado_academico || "Activo"}","${alumno.documento_url || ""}"\n`;
 
-          const link =
-            document.createElement(
-              "a"
-            );
+        continue;
+      }
 
-          link.href =
-            URL.createObjectURL(
-              contenido
-            );
+      let creditosAcumulados = 0;
 
-          link.download =
-            "generaciones_exportadas.zip";
+      for (const registro of historial) {
 
-          document.body.appendChild(
-            link
-          );
+        creditosAcumulados +=
+          registro.creditos_acumulados || 0;
 
-          link.click();
+        let materiasRecursadas = 0;
 
-          document.body.removeChild(
-            link
-          );
+        if (
+          registro.materias_json &&
+          Array.isArray(
+            registro.materias_json
+          )
+        ) {
+          materiasRecursadas =
+            registro.materias_json.filter(
+              (materia) =>
+                materia.recursa ===
+                "Sí"
+            ).length;
         }
+
+        const estatusFinal =
+          parseInt(
+            registro.semestre
+          ) >= 8 &&
+          creditosAcumulados >= 380
+            ? "Egresado"
+            : "Activo";
+
+        csv += `"${alumno.numero_cuenta || ""}","${alumno.nombre || ""}","${alumno.generacion || ""}","${registro.semestre || ""}","${registro.periodo || ""}","${registro.creditos_acumulados || 0}","${creditosAcumulados}","${materiasRecursadas}","${estatusFinal}","${alumno.documento_url || ""}"\n`;
+      }
+    }
+
+    zip.file(
+      `generacion_${generacion}.csv`,
+      csv
+    );
+  }
+
+  const contenido =
+    await zip.generateAsync({
+      type: "blob",
+    });
+
+  const link =
+    document.createElement(
+      "a"
+    );
+
+  link.href =
+    URL.createObjectURL(
+      contenido
+    );
+
+  link.download =
+    "generaciones_exportadas.zip";
+
+  document.body.appendChild(
+    link
+  );
+
+  link.click();
+
+  document.body.removeChild(
+    link
+  );
+}
 
         modalGeneraciones.classList.add(
           "hidden"
@@ -245,16 +304,78 @@ if (confirmarExportacionBtn) {
 /* =========================
    DESCARGAR CSV GENERACIÓN
 ========================= */
-function descargarCSVGeneracion(
+async function descargarCSVGeneracion(
   alumnos,
   generacion
 ) {
   let csv =
-    "NumeroCuenta,Nombre,Generacion,Semestre,Periodo,Creditos,EstadoAcademico,DocumentoURL\n";
+  "NumeroCuenta,Nombre,Generacion,Semestre,Periodo,CreditosSemestre,CreditosAcumulados,MateriasRecursadas,EstatusFinal,DocumentoURL\n";
 
-  alumnos.forEach((alumno) => {
-    csv += `"${alumno.numero_cuenta || ""}","${alumno.nombre || ""}","${alumno.generacion || ""}","${alumno.semestre || ""}","${alumno.periodo || ""}","${alumno.creditos_acumulados || 0}","${alumno.estado_academico || ""}","${alumno.documento_url || ""}"\n`;
-  });
+  for (const alumno of alumnos) {
+
+  const {
+    data: historial,
+  } =
+    await supabaseClient
+      .from(
+        "historial_academico"
+      )
+      .select("*")
+      .eq(
+        "numero_cuenta",
+        alumno.numero_cuenta
+      )
+      .order(
+        "fecha_registro",
+        {
+          ascending: true,
+        }
+      );
+
+  // Si no tiene historial
+  if (
+    !historial ||
+    !historial.length
+  ) {
+    csv += `"${alumno.numero_cuenta || ""}","${alumno.nombre || ""}","${alumno.generacion || ""}","${alumno.semestre || ""}","${alumno.periodo || ""}","0","0","0","${alumno.estado_academico || "Activo"}","${alumno.documento_url || ""}"\n`;
+
+    continue;
+  }
+
+  let creditosAcumulados = 0;
+
+  for (const registro of historial) {
+
+    creditosAcumulados +=
+      registro.creditos_acumulados || 0;
+
+    let materiasRecursadas = 0;
+
+    if (
+      registro.materias_json &&
+      Array.isArray(
+        registro.materias_json
+      )
+    ) {
+      materiasRecursadas =
+        registro.materias_json.filter(
+          (materia) =>
+            materia.recursa ===
+            "Sí"
+        ).length;
+    }
+
+    const estatusFinal =
+      parseInt(
+        registro.semestre
+      ) >= 8 &&
+      creditosAcumulados >= 380
+        ? "Egresado"
+        : "Activo";
+
+    csv += `"${alumno.numero_cuenta || ""}","${alumno.nombre || ""}","${alumno.generacion || ""}","${registro.semestre || ""}","${registro.periodo || ""}","${registro.creditos_acumulados || 0}","${creditosAcumulados}","${materiasRecursadas}","${estatusFinal}","${alumno.documento_url || ""}"\n`;
+  }
+}
 
   const blob = new Blob([csv], {
     type: "text/csv;charset=utf-8;",

@@ -1,145 +1,265 @@
-
 const loginBtn = document.getElementById("loginBtn");
 const coordUser = document.getElementById("coordUser");
 const coordPass = document.getElementById("coordPass");
 const loginError = document.getElementById("loginError");
 
-const coordinadorLogin = document.getElementById("coordinadorLogin");
-const dashboardPanel = document.getElementById("dashboardPanel");
+const coordinadorLogin =
+  document.getElementById(
+    "coordinadorLogin"
+  );
 
-const tablaAlumnos = document.getElementById("tablaAlumnos");
-const cerrarSesionBtn = document.getElementById("cerrarSesionBtn");
+const dashboardPanel =
+  document.getElementById(
+    "dashboardPanel"
+  );
 
-const exportarCSVBtn = document.getElementById("exportarCSVBtn");
-//const eliminarRegistrosBtn = document.getElementById("eliminarRegistrosBtn");
+const tablaAlumnos =
+  document.getElementById(
+    "tablaAlumnos"
+  );
+
+const cerrarSesionBtn =
+  document.getElementById(
+    "cerrarSesionBtn"
+  );
+
+const exportarCSVBtn =
+  document.getElementById(
+    "exportarCSVBtn"
+  );
+
+const depurarGeneracionBtn =
+  document.getElementById(
+    "depurarGeneracionBtn"
+  );
 
 const filtroGeneracion =
-  document.getElementById("filtroGeneracion");
+  document.getElementById(
+    "filtroGeneracion"
+  );
 
 const filtroEstado =
-  document.getElementById("filtroEstado");
+  document.getElementById(
+    "filtroEstado"
+  );
 
 const coordinadorBienvenida =
-  document.getElementById("coordinadorBienvenida");
+  document.getElementById(
+    "coordinadorBienvenida"
+  );
 
-// MVP Credenciales temporales
+const busquedaAlumno =
+  document.getElementById(
+    "busquedaAlumno"
+  );
+
+// =========================
+// CONFIGURACIÓN
+// =========================
+const MINIMO_COHORTE = 30;
+
+// MVP temporal
 const USER = "coordinador";
 const PASS = "admin123";
 
+// =========================
+// ESTADO GLOBAL
+// =========================
 let alumnos = [];
 let alumnosFiltrados = [];
+let generacionesVencidas = [];
 
-// Login
+// =========================
+// LOGIN
+// =========================
 if (loginBtn) {
-loginBtn.addEventListener("click", async () => {
-  const usuario = coordUser.value.trim();
-  const password = coordPass.value.trim();
+  loginBtn.addEventListener(
+    "click",
+    async () => {
+      const usuario =
+        coordUser.value.trim();
 
-  if (!usuario || !password) {
-    loginError.textContent =
-      "Completa usuario y contraseña.";
-    return;
-  }
+      const password =
+        coordPass.value.trim();
 
-if (coordinadorBienvenida) {
-  coordinadorBienvenida.textContent =
-    `Bienvenido, ${usuario}`;
+      if (!usuario || !password) {
+        loginError.textContent =
+          "Completa usuario y contraseña.";
+        return;
+      }
+
+      if (coordinadorBienvenida) {
+        coordinadorBienvenida.textContent =
+          `Bienvenido, ${usuario}`;
+      }
+
+      const { data, error } =
+        await supabaseClient
+          .from("coordinadores")
+          .select("*")
+          .eq("usuario", usuario)
+          .eq("password", password)
+          .maybeSingle();
+
+      if (error) {
+        console.error(error);
+
+        loginError.textContent =
+          "Error de conexión.";
+        return;
+      }
+
+      if (!data) {
+        loginError.textContent =
+          "Usuario o contraseña incorrectos.";
+        return;
+      }
+
+      localStorage.setItem(
+        "coordinadorActivo",
+        "true"
+      );
+
+      localStorage.setItem(
+        "coordinadorUsuario",
+        usuario
+      );
+
+      coordinadorLogin.style.display =
+        "none";
+
+      dashboardPanel.style.display =
+        "block";
+
+      cargarAlumnos();
+    }
+  );
 }
 
-  const { data, error } = await supabaseClient
-    .from("coordinadores")
-    .select("*")
-    .eq("usuario", usuario)
-    .eq("password", password)
-    .maybeSingle();
-
-  if (error) {
-    console.error(error);
-    loginError.textContent =
-      "Error de conexión.";
-    return;
-  }
-
-  if (!data) {
-    loginError.textContent =
-      "Usuario o contraseña incorrectos.";
-    return;
-  }
-
-  localStorage.setItem("coordinadorActivo", "true");
-  localStorage.setItem(
-  "coordinadorUsuario",
-  usuario
-);
-
-  coordinadorLogin.style.display = "none";
-  dashboardPanel.style.display = "block";
-
-  cargarAlumnos();
-})};
-
-// Cargar sesión
+// =========================
+// SESIÓN
+// =========================
 async function verificarSesionCoordinador() {
   const coordinadorActivo =
-    localStorage.getItem("coordinadorActivo");
+    localStorage.getItem(
+      "coordinadorActivo"
+    );
 
-  if (coordinadorActivo !== "true") return;
+  if (
+    coordinadorActivo !==
+    "true"
+  )
+    return;
 
-  coordinadorLogin.style.display = "none";
-  dashboardPanel.style.display = "block";
+  coordinadorLogin.style.display =
+    "none";
+
+  dashboardPanel.style.display =
+    "block";
 
   await cargarAlumnos();
 }
 
 const usuarioGuardado =
-  localStorage.getItem("coordinadorUsuario");
+  localStorage.getItem(
+    "coordinadorUsuario"
+  );
 
-if (coordinadorBienvenida && usuarioGuardado) {
+if (
+  coordinadorBienvenida &&
+  usuarioGuardado
+) {
   coordinadorBienvenida.textContent =
     `Bienvenido, ${usuarioGuardado}`;
 }
 
 verificarSesionCoordinador();
 
-// Cargar alumnos
+// =========================
+// MODAL MENSAJE
+// =========================
+function mostrarModalMensaje(
+  mensaje
+) {
+  const modal =
+    document.getElementById(
+      "modalMensaje"
+    );
+
+  const texto =
+    document.getElementById(
+      "modalMensajeTexto"
+    );
+
+  if (!modal || !texto) {
+    alert(mensaje);
+    return;
+  }
+
+  texto.textContent = mensaje;
+
+  modal.classList.remove(
+    "hidden"
+  );
+
+  setTimeout(() => {
+    modal.classList.add(
+      "hidden"
+    );
+  }, 4000);
+}
+
+// =========================
+// CARGAR ALUMNOS
+// =========================
 async function cargarAlumnos() {
   tablaAlumnos.innerHTML = `
     <tr>
-      <td colspan="8">Cargando...</td>
+      <td colspan="8">
+        Cargando...
+      </td>
     </tr>
   `;
 
-  // Crear query base
   let query = supabaseClient
     .from("alumnos")
     .select("*");
 
-  // Filtro por estado de generación
-  const estadoSeleccionado = filtroEstado.value;
+  const estadoSeleccionado =
+    filtroEstado.value;
 
   if (estadoSeleccionado) {
     const estadoMap = {
       Activo: "activa",
-      Archivado: "archivada",
+      Archivado:
+        "archivada",
     };
 
-    if (estadoMap[estadoSeleccionado]) {
+    if (
+      estadoMap[
+        estadoSeleccionado
+      ]
+    ) {
       query = query.eq(
         "estado_generacion",
-        estadoMap[estadoSeleccionado]
+        estadoMap[
+          estadoSeleccionado
+        ]
       );
     }
   }
 
-  // Ejecutar query ordenada
-  const { data, error } = await query.order(
-    "numero_cuenta",
-    { ascending: true }
-  );
+  const { data, error } =
+    await query.order(
+      "numero_cuenta",
+      {
+        ascending: true,
+      }
+    );
 
-  // Manejo de errores
   if (error) {
     console.error(error);
+
     tablaAlumnos.innerHTML = `
       <tr>
         <td colspan="8">
@@ -150,8 +270,10 @@ async function cargarAlumnos() {
     return;
   }
 
-  // Sin registros
-  if (!data || data.length === 0) {
+  if (
+    !data ||
+    data.length === 0
+  ) {
     tablaAlumnos.innerHTML = `
       <tr>
         <td colspan="8">
@@ -162,200 +284,242 @@ async function cargarAlumnos() {
     return;
   }
 
-  // Guardar datos globales
   alumnos = data;
   alumnosFiltrados = data;
 
-  const conteoGeneraciones = {};
-
-alumnos.forEach((alumno) => {
-  if (!alumno.generacion) return;
-
-  conteoGeneraciones[
-    alumno.generacion
-  ] =
-    (conteoGeneraciones[
-      alumno.generacion
-    ] || 0) + 1;
-});
-
-const generacionesValidas =
-  Object.entries(
-    conteoGeneraciones
-  ).filter(
-    ([generacion, total]) =>
-      total >= 1
-  );
-
-if (generacionesValidas.length) {
-  // Ordenar de más antigua a más reciente
-  generacionesValidas.sort(
-    (a, b) =>
-      parseInt(a[0]) -
-      parseInt(b[0])
-  );
-
-  // Primera cohorte institucional
-  const generacionBase =
-    generacionesValidas[0][0];
-
-  const anioActual =
-    new Date().getFullYear();
-
-  // Si ya pasaron 4 años o más
-  const depurarGeneracionBtn =
-  document.getElementById(
-    "depurarGeneracionBtn"
-  );
-  if (
-    anioActual -
-      parseInt(generacionBase) >=
-    4
-  ) {
-    const ultimaGeneracionAvisada =
-  localStorage.getItem(
-    "ultimaGeneracionAvisada"
-  );
-  depurarGeneracionBtn.style.display =
-  "inline-block";
-
-if (
-  ultimaGeneracionAvisada !==
-  generacionBase
-) {
-  mostrarModalMensaje(
-    `Aviso institucional: La generación ${generacionBase} ha cumplido su ciclo de 4 años. Se recomienda exportar, archivar y depurar su información.`
-  );
-
-  localStorage.setItem(
-    "ultimaGeneracionAvisada",
-    generacionBase
-  );
-}
-  }
-}  
-
-  // Renderizar tabla
-  renderTabla(alumnosFiltrados);
-
-  // Generaciones únicas
+  // =========================
+  // GENERACIONES ÚNICAS
+  // =========================
   const generacionesUnicas = [
     ...new Set(
       data
-        .map((a) => a.generacion)
+        .map(
+          (a) =>
+            a.generacion
+        )
         .filter(Boolean)
     ),
   ].sort();
 
-  // Reiniciar filtro
   filtroGeneracion.innerHTML = `
     <option value="">
       Todas las generaciones
     </option>
   `;
 
-  // Agregar generaciones dinámicas
-  generacionesUnicas.forEach((gen) => {
-    filtroGeneracion.innerHTML += `
-      <option value="${gen}">
-        ${gen}
-      </option>
-    `;
-  });
-}
-
-// Buscador
-const busquedaAlumno =
-  document.getElementById("busquedaAlumno");
-
-// Cerrar sesión
-cerrarSesionBtn.addEventListener("click", () => {
-  localStorage.removeItem("coordinadorActivo");
-  localStorage.removeItem("coordinadorUsuario");
-
-  window.location.reload();
-});
-
-exportarCSVBtn.addEventListener("click", async () => {
-  const { data, error } = await supabaseClient
-    .from("alumnos")
-    .select("*");
-
-  if (error || !data) {
-    alert("No se pudieron exportar los registros.");
-    return;
-  }
-
-  let csv =
-"NumeroCuenta,Nombre,Generacion,Semestre,Periodo,Creditos,EstadoAcademico,DocumentoURL\n";
-
-  data.forEach((alumno) => {
-    csv += `"${alumno.numero_cuenta || ""}","${alumno.nombre || ""}","${alumno.generacion || ""}","${alumno.semestre || ""}","${alumno.periodo || ""}","${alumno.creditos_acumulados || 0}","${alumno.estado_academico || ""}","${alumno.documento_url || ""}"\n`;
-  });
-
-  const blob = new Blob([csv], {
-    type: "text/csv;charset=utf-8;",
-  });
-
-  const link = document.createElement("a");
-  const url = URL.createObjectURL(blob);
-
-  link.setAttribute("href", url);
-  link.setAttribute("download", "alumnos_registrados.csv");
-
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-});
-
-/*eliminarRegistrosBtn.addEventListener("click", async () => {
-  const confirmar = confirm(
-    "¿Seguro que deseas eliminar TODOS los registros, materias y expedientes? Esta acción no se puede deshacer."
+  generacionesUnicas.forEach(
+    (gen) => {
+      filtroGeneracion.innerHTML += `
+        <option value="${gen}">
+          ${gen}
+        </option>
+      `;
+    }
   );
 
-  if (!confirmar) return;
+  // =========================
+  // COHORTES
+  // =========================
+  const conteoGeneraciones =
+    {};
 
-  try {
-    // 1. Eliminar materias
-    const { error: materiasError } = await supabaseClient
-      .from("materias_alumno")
-      .delete()
-      .neq("id", 0);
+  alumnos.forEach(
+    (alumno) => {
+      if (
+        !alumno.generacion
+      )
+        return;
 
-    if (materiasError) {
-      console.error(materiasError);
-      alert("No se pudieron eliminar las materias.");
-      return;
+      conteoGeneraciones[
+        alumno.generacion
+      ] =
+        (conteoGeneraciones[
+          alumno.generacion
+        ] || 0) + 1;
     }
+  );
 
-    // 2. Eliminar alumnos
-    const { error: alumnosError } = await supabaseClient
-      .from("alumnos")
-      .delete()
-      .neq("id", 0);
+  const generacionesValidas =
+    Object.entries(
+      conteoGeneraciones
+    ).filter(
+      (
+        [generacion, total]
+      ) =>
+        total >=
+        MINIMO_COHORTE
+    );
+    
+      const anioActual =
+    new Date().getFullYear();
 
-    if (alumnosError) {
-      console.error(alumnosError);
-      alert("No se pudieron eliminar los alumnos.");
-      return;
-    }
+  generacionesVencidas =
+    generacionesValidas.filter(
+      ([generacion]) =>
+        anioActual -
+          parseInt(
+            generacion
+          ) >=
+        4
+    );
 
-    // ⚠️ Nota:
-    // Los PDFs en storage siguen existiendo.
-    // Después podemos hacer limpieza automática de storage.
-
-    alert("Todos los registros fueron eliminados correctamente.");
-
-    tablaAlumnos.innerHTML = "";
-
-  } catch (err) {
-    console.error(err);
-    alert("Ocurrió un error inesperado.");
+  // =========================
+  // BOTÓN DEPURAR
+  // =========================
+  if (
+    depurarGeneracionBtn
+  ) {
+    depurarGeneracionBtn.style.display =
+      generacionesVencidas.length
+        ? "inline-block"
+        : "none";
   }
-});*/
 
-function renderTabla(lista) {
-  if (!lista || lista.length === 0) {
+  // =========================
+  // AVISO INSTITUCIONAL
+  // =========================
+  if (
+    generacionesVencidas.length
+  ) {
+    generacionesVencidas.sort(
+      (a, b) =>
+        parseInt(a[0]) -
+        parseInt(b[0])
+    );
+
+    const generacionBase =
+      generacionesVencidas[0][0];
+
+    const ultimaGeneracionAvisada =
+      localStorage.getItem(
+        "ultimaGeneracionAvisada"
+      );
+
+    if (
+      ultimaGeneracionAvisada !==
+      generacionBase
+    ) {
+      mostrarModalMensaje(
+        `Aviso institucional: La generación ${generacionBase} ha cumplido su ciclo de 4 años. Se recomienda exportar, archivar y depurar su información.`
+      );
+
+      localStorage.setItem(
+        "ultimaGeneracionAvisada",
+        generacionBase
+      );
+    }
+  }
+
+  // =========================
+  // RENDER FINAL
+  // =========================
+  renderTabla(
+    alumnosFiltrados
+  );
+}
+
+// =========================
+// CERRAR SESIÓN
+// =========================
+if (cerrarSesionBtn) {
+  cerrarSesionBtn.addEventListener(
+    "click",
+    () => {
+      localStorage.removeItem(
+        "coordinadorActivo"
+      );
+
+      localStorage.removeItem(
+        "coordinadorUsuario"
+      );
+
+      window.location.reload();
+    }
+  );
+}
+
+// =========================
+// EXPORTAR CSV GENERAL
+// =========================
+if (exportarCSVBtn) {
+  exportarCSVBtn.addEventListener(
+    "click",
+    async () => {
+      const {
+        data,
+        error,
+      } =
+        await supabaseClient
+          .from("alumnos")
+          .select("*");
+
+      if (
+        error ||
+        !data
+      ) {
+        mostrarModalMensaje(
+          "No se pudieron exportar los registros."
+        );
+        return;
+      }
+
+      let csv =
+        "NumeroCuenta,Nombre,Generacion,Semestre,Periodo,Creditos,EstadoAcademico,DocumentoURL\n";
+
+      data.forEach(
+        (alumno) => {
+          csv += `"${alumno.numero_cuenta || ""}","${alumno.nombre || ""}","${alumno.generacion || ""}","${alumno.semestre || ""}","${alumno.periodo || ""}","${alumno.creditos_acumulados || 0}","${alumno.estado_academico || ""}","${alumno.documento_url || ""}"\n`;
+        }
+      );
+
+      const blob =
+        new Blob([csv], {
+          type: "text/csv;charset=utf-8;",
+        });
+
+      const link =
+        document.createElement(
+          "a"
+        );
+
+      const url =
+        URL.createObjectURL(
+          blob
+        );
+
+      link.setAttribute(
+        "href",
+        url
+      );
+
+      link.setAttribute(
+        "download",
+        "alumnos_registrados.csv"
+      );
+
+      document.body.appendChild(
+        link
+      );
+
+      link.click();
+
+      document.body.removeChild(
+        link
+      );
+    }
+  );
+}
+
+// =========================
+// TABLA
+// =========================
+function renderTabla(
+  lista
+) {
+  if (
+    !lista ||
+    lista.length === 0
+  ) {
     tablaAlumnos.innerHTML = `
       <tr>
         <td colspan="8">
@@ -366,9 +530,10 @@ function renderTabla(lista) {
     return;
   }
 
-  tablaAlumnos.innerHTML = lista
-    .map((alumno) => {
-      return `
+  tablaAlumnos.innerHTML =
+    lista
+      .map(
+        (alumno) => `
         <tr>
           <td>${alumno.numero_cuenta || ""}</td>
           <td>${alumno.nombre || ""}</td>
@@ -385,172 +550,338 @@ function renderTabla(lista) {
             }
           </td>
         </tr>
-      `;
-    })
-    .join("");
+      `
+      )
+      .join("");
 }
 
+// =========================
+// FILTROS
+// =========================
 function aplicarFiltros() {
-  const texto = busquedaAlumno
-  ? busquedaAlumno.value.trim().toLowerCase()
-  : "";
-  const generacion = filtroGeneracion.value;
-  const estado = filtroEstado.value;
+  const texto =
+    busquedaAlumno
+      ? busquedaAlumno.value
+          .trim()
+          .toLowerCase()
+      : "";
 
-  alumnosFiltrados = alumnos.filter((alumno) => {
-    const coincideTexto =
-      alumno.numero_cuenta?.toString().includes(texto) ||
-      alumno.nombre?.toLowerCase().includes(texto);
+  const generacion =
+    filtroGeneracion.value;
 
-    const coincideGeneracion =
-      !generacion || alumno.generacion === generacion;
+  const estado =
+    filtroEstado.value;
 
-    const coincideEstado =
-      !estado || alumno.estado_academico === estado;
+  alumnosFiltrados =
+    alumnos.filter(
+      (alumno) => {
+        const coincideTexto =
+          alumno.numero_cuenta
+            ?.toString()
+            .includes(
+              texto
+            ) ||
+          alumno.nombre
+            ?.toLowerCase()
+            .includes(
+              texto
+            );
 
-    return (
-      coincideTexto &&
-      coincideGeneracion &&
-      coincideEstado
+        const coincideGeneracion =
+          !generacion ||
+          alumno.generacion ===
+            generacion;
+
+        const coincideEstado =
+          !estado ||
+          alumno.estado_academico ===
+            estado;
+
+        return (
+          coincideTexto &&
+          coincideGeneracion &&
+          coincideEstado
+        );
+      }
     );
-  });
 
-  renderTabla(alumnosFiltrados);
+  renderTabla(
+    alumnosFiltrados
+  );
 }
 
+// =========================
+// EVENTOS FILTROS
+// =========================
 if (busquedaAlumno) {
-  busquedaAlumno.addEventListener("input", aplicarFiltros);
+  busquedaAlumno.addEventListener(
+    "input",
+    aplicarFiltros
+  );
 }
 
 if (filtroGeneracion) {
-  filtroGeneracion.addEventListener("change", aplicarFiltros);
+  filtroGeneracion.addEventListener(
+    "change",
+    aplicarFiltros
+  );
 }
 
 if (filtroEstado) {
-  filtroEstado.addEventListener("change", aplicarFiltros);
-}
-
-/* =========================
-   VOLVER AL REGISTRO ALUMNO
-========================= */
-const volverRegistroBtn =
-  document.getElementById(
-    "volverRegistroBtn"
-  );
-
-if (volverRegistroBtn) {
-  volverRegistroBtn.addEventListener(
-    "click",
-    () => {
-      window.location.href =
-        "index.html";
+  filtroEstado.addEventListener(
+    "change",
+    async () => {
+      await cargarAlumnos();
+      aplicarFiltros();
     }
   );
 }
 
 // =========================
-// DEPURAR GENERACIÓN
+// DEPURAR GENERACIONES
 // =========================
-if (depurarGeneracionBtn) {
+async function eliminarGeneracion(
+  generacion
+) {
+  const {
+    data,
+    error,
+  } =
+    await supabaseClient
+      .from("alumnos")
+      .select(
+        "numero_cuenta, documento_url"
+      )
+      .eq(
+        "generacion",
+        generacion
+      );
+
+  if (
+    error ||
+    !data
+  ) {
+    console.error(
+      error
+    );
+    return false;
+  }
+
+  // Eliminar documentos
+  for (const alumno of data) {
+    if (
+      alumno.documento_url
+    ) {
+      const path =
+        alumno.documento_url.split(
+          "/documentos-alumnos/"
+        )[1];
+
+      if (path) {
+        await supabaseClient.storage
+          .from(
+            "documentos-alumnos"
+          )
+          .remove([path]);
+      }
+    }
+  }
+
+  // Eliminar alumnos
+  const {
+    error: deleteError,
+  } =
+    await supabaseClient
+      .from("alumnos")
+      .delete()
+      .eq(
+        "generacion",
+        generacion
+      );
+
+  if (deleteError) {
+    console.error(
+      deleteError
+    );
+    return false;
+  }
+
+  return true;
+}
+
+// =========================
+// MODAL DEPURAR
+// =========================
+if (
+  depurarGeneracionBtn
+) {
   depurarGeneracionBtn.addEventListener(
     "click",
-    async () => {
-      const generacion =
-        prompt(
-          "Escribe la generación que deseas depurar definitivamente (ej. 2026):"
+    () => {
+      const modal =
+        document.getElementById(
+          "modalDepurar"
         );
 
-      if (!generacion) return;
+      const lista =
+        document.getElementById(
+          "listaDepurar"
+        );
+
+      if (
+        !modal ||
+        !lista
+      )
+        return;
+
+      lista.innerHTML =
+        "";
+
+      if (
+        !generacionesVencidas.length
+      ) {
+        lista.innerHTML = `
+          <p>
+            No hay generaciones disponibles para depuración.
+          </p>
+        `;
+      } else {
+        generacionesVencidas.forEach(
+          ([gen]) => {
+            lista.innerHTML += `
+              <label style="display:block; margin-bottom:10px;">
+                <input type="checkbox" value="${gen}" />
+                Generación ${gen}
+              </label>
+            `;
+          }
+        );
+      }
+
+      modal.classList.remove(
+        "hidden"
+      );
+    }
+  );
+}
+
+// =========================
+// CONFIRMAR DEPURACIÓN
+// =========================
+const confirmarDepurarBtn =
+  document.getElementById(
+    "confirmarDepurarBtn"
+  );
+
+if (
+  confirmarDepurarBtn
+) {
+  confirmarDepurarBtn.addEventListener(
+    "click",
+    async () => {
+      const seleccionadas =
+        [
+          ...document.querySelectorAll(
+            "#listaDepurar input:checked"
+          ),
+        ].map(
+          (el) =>
+            el.value
+        );
+
+      if (
+        !seleccionadas.length
+      ) {
+        mostrarModalMensaje(
+          "Selecciona al menos una generación."
+        );
+        return;
+      }
 
       const confirmar =
         confirm(
-          `ATENCIÓN:\n\nEsto eliminará permanentemente alumnos y documentos de la generación ${generacion}.\n\nAsegúrate de haber exportado su información antes.\n\n¿Deseas continuar?`
+          `Se eliminarán ${seleccionadas.length} generaciones de forma permanente.\n\n¿Deseas continuar?`
         );
 
-      if (!confirmar) return;
+      if (
+        !confirmar
+      )
+        return;
 
-      try {
-        // Buscar alumnos de esa generación
-        const { data, error } =
-          await supabaseClient
-            .from("alumnos")
-            .select(
-              "numero_cuenta, documento_url"
-            )
-            .eq(
-              "generacion",
-              generacion
-            );
+      let eliminadas = 0;
 
-        if (
-          error ||
-          !data.length
-        ) {
-          mostrarModalMensaje(
-            "No se encontraron alumnos para esa generación."
+      for (const generacion of seleccionadas) {
+        const exito =
+          await eliminarGeneracion(
+            generacion
           );
-          return;
-        }
 
-        // Eliminar documentos del storage
-        for (const alumno of data) {
-          if (
-            alumno.documento_url
-          ) {
-            const path =
-              alumno.documento_url
-                .split(
-                  "/documentos-alumnos/"
-                )[1];
-
-            if (path) {
-              await supabaseClient.storage
-                .from(
-                  "documentos-alumnos"
-                )
-                .remove([path]);
-            }
-          }
-        }
-
-        // Eliminar registros
-        const {
-          error: deleteError,
-        } =
-          await supabaseClient
-            .from("alumnos")
-            .delete()
-            .eq(
-              "generacion",
-              generacion
-            );
-
-        if (deleteError) {
-          mostrarModalMensaje(
-            "No se pudieron eliminar los registros."
-          );
-          return;
-        }
-
-        mostrarModalMensaje(
-          `La generación ${generacion} fue depurada correctamente.`
-        );
-
-        depurarGeneracionBtn.style.display =
-  "inline-block";
-
-  depurarGeneracionBtn.style.display =
-  "none";
-
-        cargarAlumnos();
-
-      } catch (err) {
-        console.error(err);
-
-        mostrarModalMensaje(
-          "Ocurrió un error durante la depuración."
-        );
+        if (exito)
+          eliminadas++;
       }
+
+      document
+        .getElementById(
+          "modalDepurar"
+        )
+        .classList.add(
+          "hidden"
+        );
+
+      mostrarModalMensaje(
+        `${eliminadas} generaciones depuradas correctamente.`
+      );
+
+      localStorage.removeItem(
+        "ultimaGeneracionAvisada"
+      );
+
+      cargarAlumnos();
+    }
+  );
+}
+
+// =========================
+// CANCELAR DEPURACIÓN
+// =========================
+const cancelarDepurarBtn =
+  document.getElementById(
+    "cancelarDepurarBtn"
+  );
+
+if (
+  cancelarDepurarBtn
+) {
+  cancelarDepurarBtn.addEventListener(
+    "click",
+    () => {
+      document
+        .getElementById(
+          "modalDepurar"
+        )
+        .classList.add(
+          "hidden"
+        );
+    }
+  );
+}
+
+// =========================
+// VOLVER AL REGISTRO
+// =========================
+const volverRegistroBtn =
+  document.getElementById(
+    "volverRegistroBtn"
+  );
+
+if (
+  volverRegistroBtn
+) {
+  volverRegistroBtn.addEventListener(
+    "click",
+    () => {
+      window.location.href =
+        "index.html";
     }
   );
 }

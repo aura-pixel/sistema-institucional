@@ -119,46 +119,6 @@
   style="display:none;"
 >
 
-  <!-- FILTROS -->
-  <div class="dashboard-filters">
-
-    <!-- Buscar alumno -->
-    <div class="dashboard-search-row">
-      <input
-        type="text"
-        id="busquedaAlumno"
-        placeholder="Buscar por número de cuenta o nombre..."
-      />
-    </div>
-
-    <!-- Generación -->
-    <select id="filtroGeneracion">
-      <option value="">
-        Todas las generaciones
-      </option>
-    </select>
-
-    <!-- Estado -->
-    <select id="filtroEstado">
-      <option value="">
-        Todos los estados
-      </option>
-
-      <option value="Activo">
-        Activo
-      </option>
-
-      <option value="Egresado">
-        Egresado
-      </option>
-
-      <option value="Archivado">
-        Archivado
-      </option>
-    </select>
-
-  </div>
-
   <!-- STATS -->
   <div
     id="estadisticasDashboard"
@@ -222,6 +182,46 @@
 
   </div>
 
+  <!-- FILTROS -->
+  <div class="dashboard-filters">
+
+    <!-- Buscar alumno -->
+    <div class="dashboard-search-row">
+      <input
+        type="text"
+        id="busquedaAlumno"
+        placeholder="Buscar por número de cuenta o nombre..."
+      />
+    </div>
+
+    <!-- Generación -->
+    <select id="filtroGeneracion">
+      <option value="">
+        Todas las generaciones
+      </option>
+    </select>
+
+    <!-- Estado -->
+    <select id="filtroEstado">
+      <option value="">
+        Todos los estados
+      </option>
+
+      <option value="Activo">
+        Activo
+      </option>
+
+      <option value="Egresado">
+        Egresado
+      </option>
+
+      <option value="Archivado">
+        Archivado
+      </option>
+    </select>
+
+  </div>
+
   <!-- TABLA -->
   <div class="dashboard-table-wrapper">
 
@@ -245,6 +245,33 @@
     </table>
 
   </div>
+
+  <!-- HISTORIAL ACADÉMICO -->
+<div class="dashboard-table-wrapper">
+  <h3 id="historialTitulo">
+    Historial académico del alumno seleccionado
+  </h3>
+
+  <table class="dashboard-table">
+    <thead>
+      <tr>
+        <th>Semestre</th>
+        <th>Periodo</th>
+        <th>Créditos</th>
+        <th>Fecha de registro</th>
+      </tr>
+    </thead>
+
+    <tbody id="tablaHistorial">
+      <tr>
+        <td colspan="4">
+          Selecciona un alumno para visualizar historial
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
 
 </div>
 
@@ -359,15 +386,19 @@
   class="modal-overlay hidden"
 >
   <div class="modal-box">
-
     <h3>
-      Aviso 
+      Aviso institucional
     </h3>
 
     <p id="modalMensajeTexto">
-      Aquí aparecerá el mensaje.
+      Mensaje
     </p>
 
+    <button
+      id="modalMensajeBtn"
+    >
+      Entendido
+    </button>
   </div>
 </div>
 

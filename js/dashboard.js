@@ -567,21 +567,6 @@ if (cerrarSesionBtn) {
   );
 }
 
-const { data: historial } = await supabaseClient
-  .from("historial_academico")
-  .select("creditos_acumulados")
-  .eq("numero_cuenta", alumno.numero_cuenta);
-
-const creditosTotales =
-  historial?.reduce(
-    (total, registro) =>
-      total + (registro.creditos_acumulados || 0),
-    0
-  ) || 0;
-
-// =========================
-// EXPORTAR CSV GENERAL
-// =========================
 // =========================
 // EXPORTAR CSV GENERAL
 // =========================

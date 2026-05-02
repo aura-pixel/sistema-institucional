@@ -218,15 +218,10 @@ if (
   window.location.href = "materias.html";
 });
 
-generacion: `${anioIngreso.value}-${parseInt(anioIngreso.value) + 4}`,
-
 // INICIAR AUTOCARGA
 cargarDatosAlumno();
 
-// js/registro.js
 // FORMATO AUTOMÁTICO PERIODO ESCOLAR
-// AGREGA:
-
 periodo.addEventListener("input", () => {
   let valor = periodo.value.toUpperCase();
 
@@ -255,10 +250,7 @@ periodo.addEventListener("input", () => {
   periodo.value = valor;
 });
 
-// js/registro.js
 // NSS solo números
-// AGREGA:
-
 nss.addEventListener("input", () => {
   nss.value = nss.value.replace(/\D/g, "");
 
@@ -267,10 +259,7 @@ nss.addEventListener("input", () => {
   }
 });
 
-// js/registro.js
 // Nacionalidad dinámica
-// AGREGA:
-
 nacionalidad.addEventListener("change", () => {
   if (nacionalidad.value === "Extranjera") {
     paisOrigenContainer.style.display = "block";
@@ -279,4 +268,3 @@ nacionalidad.addEventListener("change", () => {
     paisOrigen.value = "";
   }
 });
-

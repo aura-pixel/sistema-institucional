@@ -18,6 +18,16 @@ const tablaAlumnos =
     "tablaAlumnos"
   );
 
+const tablaHistorial =
+  document.getElementById(
+    "tablaHistorial"
+  );
+
+const historialTitulo =
+  document.getElementById(
+    "historialTitulo"
+  );
+
 const cerrarSesionBtn =
   document.getElementById(
     "cerrarSesionBtn"
@@ -56,7 +66,7 @@ const busquedaAlumno =
 // =========================
 // CONFIGURACIÓN
 // =========================
-const MINIMO_COHORTE = 30;
+const MINIMO_COHORTE = 1;
 
 // MVP temporal
 const USER = "coordinador";
@@ -399,9 +409,14 @@ async function cargarAlumnos() {
       ultimaGeneracionAvisada !==
       generacionBase
     ) {
-      mostrarModalMensaje(
-        `Aviso institucional: La generación ${generacionBase} ha cumplido su ciclo de 4 años. Se recomienda exportar, archivar y depurar su información.`
-      );
+      const generacionesTexto =
+  generacionesVencidas
+    .map(([gen]) => gen)
+    .join(", ");
+
+mostrarModalDepuracionInicial(
+  `Aviso institucional: Las generaciones ${generacionesTexto} han cumplido su ciclo de 4 años. Se recomienda exportar, archivar y depurar su información.`
+);
 
       localStorage.setItem(
         "ultimaGeneracionAvisada",
@@ -410,12 +425,126 @@ async function cargarAlumnos() {
     }
   }
 
+  function mostrarModalDepuracionInicial(
+  mensaje
+) {
+  const modal =
+    document.getElementById(
+      "modalMensaje"
+    );
+
+  const texto =
+    document.getElementById(
+      "modalMensajeTexto"
+    );
+
+  const boton =
+    document.getElementById(
+      "modalMensajeBtn"
+    );
+
+  texto.textContent =
+    mensaje;
+
+  boton.textContent =
+    "Depurar ahora";
+
+  boton.onclick = () => {
+    modal.classList.add(
+      "hidden"
+    );
+
+    if (
+      depurarGeneracionBtn
+    ) {
+      depurarGeneracionBtn.click();
+    }
+  };
+
+  modal.classList.remove(
+    "hidden"
+  );
+}
+
   // =========================
   // RENDER FINAL
   // =========================
   renderTabla(
     alumnosFiltrados
   );
+}
+
+async function cargarHistorialAlumno(
+  numeroCuenta,
+  nombreAlumno = ""
+) {
+  if (!tablaHistorial) return;
+
+  tablaHistorial.innerHTML = `
+    <tr>
+      <td colspan="4">
+        Cargando historial...
+      </td>
+    </tr>
+  `;
+
+  if (historialTitulo) {
+    historialTitulo.textContent =
+      `Historial académico de ${nombreAlumno || numeroCuenta}`;
+  }
+
+  const { data, error } =
+    await supabaseClient
+      .from("historial_academico")
+      .select("*")
+      .eq(
+        "numero_cuenta",
+        numeroCuenta
+      )
+      .order(
+        "fecha_registro",
+        { ascending: false }
+      );
+
+  if (error) {
+    console.error(error);
+
+    tablaHistorial.innerHTML = `
+      <tr>
+        <td colspan="4">
+          Error cargando historial
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  if (!data || !data.length) {
+    tablaHistorial.innerHTML = `
+      <tr>
+        <td colspan="4">
+          Sin historial registrado
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tablaHistorial.innerHTML =
+    data
+      .map(
+        (registro) => `
+          <tr>
+            <td>${registro.semestre || "-"}</td>
+            <td>${registro.periodo || "-"}</td>
+            <td>${registro.creditos_acumulados || 0}</td>
+            <td>${new Date(
+              registro.fecha_registro
+            ).toLocaleDateString()}</td>
+          </tr>
+        `
+      )
+      .join("");
 }
 
 // =========================
@@ -438,6 +567,21 @@ if (cerrarSesionBtn) {
   );
 }
 
+const { data: historial } = await supabaseClient
+  .from("historial_academico")
+  .select("creditos_acumulados")
+  .eq("numero_cuenta", alumno.numero_cuenta);
+
+const creditosTotales =
+  historial?.reduce(
+    (total, registro) =>
+      total + (registro.creditos_acumulados || 0),
+    0
+  ) || 0;
+
+// =========================
+// EXPORTAR CSV GENERAL
+// =========================
 // =========================
 // EXPORTAR CSV GENERAL
 // =========================
@@ -464,13 +608,75 @@ if (exportarCSVBtn) {
       }
 
       let csv =
-        "NumeroCuenta,Nombre,Generacion,Semestre,Periodo,Creditos,EstadoAcademico,DocumentoURL\n";
+        "NumeroCuenta,Nombre,Generacion,Semestre,Periodo,CreditosTotales,SemestresCursados,MateriasRecursadas,EstatusFinal,EstadoAcademico,DocumentoURL\n";
 
-      data.forEach(
-        (alumno) => {
-          csv += `"${alumno.numero_cuenta || ""}","${alumno.nombre || ""}","${alumno.generacion || ""}","${alumno.semestre || ""}","${alumno.periodo || ""}","${alumno.creditos_acumulados || 0}","${alumno.estado_academico || ""}","${alumno.documento_url || ""}"\n`;
-        }
-      );
+      for (const alumno of data) {
+
+        const {
+          data: historial,
+        } =
+          await supabaseClient
+            .from(
+              "historial_academico"
+            )
+            .select(
+              "creditos_acumulados"
+            )
+            .eq(
+              "numero_cuenta",
+              alumno.numero_cuenta
+            );
+
+        const creditosTotales =
+          historial?.reduce(
+            (
+              total,
+              registro
+            ) =>
+              total +
+              (registro.creditos_acumulados ||
+                0),
+            0
+          ) || 0;
+          csv += `"${alumno.numero_cuenta || ""}","${alumno.nombre || ""}","${alumno.generacion || ""}","${alumno.semestre || ""}","${alumno.periodo || ""}","${creditosTotales}","${semestresCursados}","${materiasRecursadas}","${estatusFinal}","${alumno.documento_url || ""}"\n`;
+      }
+
+      // Semestres cursados únicos
+const semestresCursados =
+  new Set(
+    historial?.map(
+      (registro) =>
+        registro.semestre
+    )
+  ).size || 0;
+
+// Materias recursadas
+let materiasRecursadas = 0;
+
+historial?.forEach(
+  (registro) => {
+    if (
+      registro.materias_json &&
+      Array.isArray(
+        registro.materias_json
+      )
+    ) {
+      materiasRecursadas +=
+        registro.materias_json.filter(
+          (materia) =>
+            materia.recursa ===
+            true
+        ).length;
+    }
+  }
+);
+
+// Detección de egreso
+const estatusFinal =
+  parseInt(alumno.semestre) >= 8 &&
+  creditosTotales >= 380
+    ? "Egresado"
+    : "Activo";
 
       const blob =
         new Blob([csv], {
@@ -534,7 +740,13 @@ function renderTabla(
     lista
       .map(
         (alumno) => `
-        <tr>
+        <tr
+          style="cursor:pointer;"
+          onclick="cargarHistorialAlumno(
+            '${alumno.numero_cuenta}',
+            '${(alumno.nombre || "").replace(/'/g, "\\'")}'
+          )"
+        >
           <td>${alumno.numero_cuenta || ""}</td>
           <td>${alumno.nombre || ""}</td>
           <td>${alumno.generacion || "-"}</td>
@@ -643,70 +855,92 @@ if (filtroEstado) {
 async function eliminarGeneracion(
   generacion
 ) {
-  const {
-    data,
-    error,
-  } =
-    await supabaseClient
-      .from("alumnos")
-      .select(
-        "numero_cuenta, documento_url"
-      )
-      .eq(
-        "generacion",
-        generacion
-      );
+  try {
+    // Buscar alumnos
+    const {
+      data,
+      error,
+    } =
+      await supabaseClient
+        .from("alumnos")
+        .select(
+          "numero_cuenta, documento_url"
+        )
+        .eq(
+          "generacion",
+          generacion
+        );
 
-  if (
-    error ||
-    !data
-  ) {
-    console.error(
-      error
-    );
-    return false;
-  }
-
-  // Eliminar documentos
-  for (const alumno of data) {
     if (
-      alumno.documento_url
+      error ||
+      !data
     ) {
-      const path =
-        alumno.documento_url.split(
-          "/documentos-alumnos/"
-        )[1];
+      console.error(
+        "Error buscando alumnos:",
+        error
+      );
+      return false;
+    }
 
-      if (path) {
-        await supabaseClient.storage
-          .from(
-            "documentos-alumnos"
-          )
-          .remove([path]);
+    // Eliminar documentos
+    for (const alumno of data) {
+      if (
+        alumno.documento_url
+      ) {
+        const path =
+          alumno.documento_url.split(
+            "/documentos-alumnos/"
+          )[1];
+
+        if (path) {
+          const {
+            error: storageError,
+          } =
+            await supabaseClient.storage
+              .from(
+                "documentos-alumnos"
+              )
+              .remove([path]);
+
+          if (storageError) {
+            console.error(
+              "Error eliminando documento:",
+              storageError
+            );
+          }
+        }
       }
     }
-  }
 
-  // Eliminar alumnos
-  const {
-    error: deleteError,
-  } =
-    await supabaseClient
-      .from("alumnos")
-      .delete()
-      .eq(
-        "generacion",
-        generacion
+    // Eliminar alumnos de base
+    const {
+      error: deleteError,
+    } =
+      await supabaseClient
+        .from("alumnos")
+        .delete()
+        .eq(
+          "generacion",
+          generacion
+        );
+
+    if (deleteError) {
+      console.error(
+        "Error eliminando generación:",
+        deleteError
       );
+      return false;
+    }
 
-  if (deleteError) {
+    return true;
+
+  } catch (err) {
     console.error(
-      deleteError
+      "Error general:",
+      err
     );
     return false;
   }
-
-  return true;
 }
 
 // =========================
@@ -779,6 +1013,17 @@ if (
   confirmarDepurarBtn.addEventListener(
     "click",
     async () => {
+
+      const lista =
+        document.getElementById(
+          "listaDepurar"
+        );
+
+      const modal =
+        document.getElementById(
+          "modalDepurar"
+        );
+
       const seleccionadas =
         [
           ...document.querySelectorAll(
@@ -789,6 +1034,9 @@ if (
             el.value
         );
 
+      // =========================
+      // VALIDACIÓN
+      // =========================
       if (
         !seleccionadas.length
       ) {
@@ -798,45 +1046,96 @@ if (
         return;
       }
 
-      const confirmar =
-        confirm(
-          `Se eliminarán ${seleccionadas.length} generaciones de forma permanente.\n\n¿Deseas continuar?`
-        );
+      lista.innerHTML = `
+  <p style="
+    text-align:center;
+    font-weight:bold;
+    padding:20px;
+    font-size:1.1rem;
+  ">
+    Descargando últimos datos institucionales...
+  </p>
+`;
 
-      if (
-        !confirmar
-      )
-        return;
+exportarGeneracionesAntesDeDepurar(
+  seleccionadas
+);
+
+await new Promise(
+  (resolve) =>
+    setTimeout(
+      resolve,
+      1500
+    )
+);
+
+      // =========================
+      // ESTADO VISUAL:
+      // DEPURANDO...
+      // =========================
+      lista.innerHTML = `
+        <p style="
+          text-align:center;
+          font-weight:bold;
+          padding:20px;
+          font-size:1.1rem;
+        ">
+          Depurando ${seleccionadas.length} generación(es)...
+        </p>
+      `;
 
       let eliminadas = 0;
 
+      // =========================
+      // ELIMINACIÓN
+      // =========================
       for (const generacion of seleccionadas) {
+
         const exito =
           await eliminarGeneracion(
             generacion
           );
 
-        if (exito)
+        if (exito) {
           eliminadas++;
+        }
+
       }
 
-      document
-        .getElementById(
-          "modalDepurar"
-        )
-        .classList.add(
-          "hidden"
-        );
+      // =========================
+      // RESULTADO FINAL
+      // =========================
+      lista.innerHTML = `
+        <p style="
+          text-align:center;
+          font-weight:bold;
+          padding:20px;
+          font-size:1.1rem;
+        ">
+          ${eliminadas} generaciones depuradas correctamente.
+        </p>
+      `;
 
-      mostrarModalMensaje(
-        `${eliminadas} generaciones depuradas correctamente.`
-      );
-
+      // =========================
+      // RESET AVISO
+      // =========================
       localStorage.removeItem(
         "ultimaGeneracionAvisada"
       );
 
-      cargarAlumnos();
+      // =========================
+      // CIERRE AUTOMÁTICO
+      // =========================
+      setTimeout(() => {
+
+        modal.classList.add(
+          "hidden"
+        );
+
+        cargarAlumnos();
+
+      }, 2000);
+
     }
   );
 }
@@ -883,5 +1182,89 @@ if (
       window.location.href =
         "index.html";
     }
+  );
+}
+
+function exportarGeneracionesAntesDeDepurar(
+  generaciones
+) {
+
+  const alumnosExportar =
+    alumnos.filter(
+      (alumno) =>
+        generaciones.includes(
+          String(
+            alumno.generacion
+          )
+        )
+    );
+
+  if (
+    !alumnosExportar.length
+  ) return;
+
+  const encabezados = [
+    "Numero de cuenta",
+    "Nombre",
+    "Generacion",
+    "Semestre",
+    "Periodo",
+    "Creditos"
+  ];
+
+  const filas =
+    alumnosExportar.map(
+      (a) => [
+        a.numero_cuenta || "",
+        a.nombre || "",
+        a.generacion || "",
+        a.semestre || "",
+        a.periodo || "",
+        a.creditos || ""
+      ]
+    );
+
+  let csv =
+    encabezados.join(",") +
+    "\n";
+
+  filas.forEach(
+    (fila) => {
+      csv +=
+        fila.join(",") +
+        "\n";
+    }
+  );
+
+  const blob =
+    new Blob(
+      [csv],
+      {
+        type:
+          "text/csv;charset=utf-8;"
+      }
+    );
+
+  const link =
+    document.createElement(
+      "a"
+    );
+
+  link.href =
+    URL.createObjectURL(
+      blob
+    );
+
+  link.download =
+    `respaldo_generaciones_${generaciones.join("_")}.csv`;
+
+  document.body.appendChild(
+    link
+  );
+
+  link.click();
+
+  document.body.removeChild(
+    link
   );
 }

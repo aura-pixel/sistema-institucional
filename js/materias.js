@@ -307,20 +307,76 @@ guardarMateriasBtn.addEventListener("click", async () => {
       .delete()
       .eq("numero_cuenta", numeroCuenta);
 
-    const { error } = await supabaseClient
-      .from("materias_alumno")
-      .insert(
-  materiasSeleccionadas.map((m) => ({
-    numero_cuenta: m.numero_cuenta,
-    clave: m.clave,
-    nombre: m.nombre,
-    creditos: m.creditos,
-    grupo: m.grupo,
-    subgrupo: m.subgrupo || "",
-    recursa: m.recursa,
-    semestre: parseInt(m.semestre),
-  }))
-);
+      const { error } = await supabaseClient
+  .from("materias_alumno")
+  .insert(
+    materiasSeleccionadas.map((m) => ({
+      numero_cuenta: m.numero_cuenta,
+      clave: m.clave,
+      nombre: m.nombre,
+      creditos: m.creditos,
+      grupo: m.grupo,
+      subgrupo: m.subgrupo || "",
+      recursa: m.recursa,
+      semestre: parseInt(m.semestre),
+    }))
+  );
+
+if (error) {
+  console.error("Error guardando materias:", error);
+  errorMaterias.textContent =
+    "No se pudieron guardar las materias.";
+  return;
+}
+
+// SOLO SI materias se guardó bien:
+const semestreActual =
+  materiasSeleccionadas[0]?.semestre?.toString() || "";
+
+const periodoActual =
+  new Date().getFullYear() +
+  "-" +
+  (new Date().getMonth() < 6 ? "A" : "B");
+
+await supabaseClient
+  .from("historial_academico")
+  .delete()
+  .eq("numero_cuenta", numeroCuenta)
+  .eq("semestre", semestreActual)
+  .eq("periodo", periodoActual);
+
+const { error: historialError } =
+  await supabaseClient
+    .from("historial_academico")
+    .insert([
+      {
+        numero_cuenta: numeroCuenta,
+        semestre: semestreActual,
+        periodo: periodoActual,
+        materias_json: JSON.parse(JSON.stringify(materiasSeleccionadas)),
+        creditos_acumulados: totalCreditos,
+        documento_url: null,
+      },
+    ]);
+
+console.log("Historial payload limpio:", {
+  numero_cuenta: numeroCuenta,
+  semestre: semestreActual,
+  periodo: periodoActual,
+  materias_json: JSON.parse(
+    JSON.stringify(materiasSeleccionadas)
+  ),
+  creditos_acumulados: totalCreditos
+});
+
+console.log("Historial error:", historialError);
+
+if (historialError) {
+  console.error(
+    "Error guardando historial:",
+    historialError
+  );
+}
 
     if (error) {
       errorMaterias.textContent =

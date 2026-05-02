@@ -13,6 +13,59 @@ if (!numeroCuenta) {
   window.location.href = "index.html";
 }
 
+let documentoExistente = null;
+
+async function verificarDocumentoExistente() {
+  const { data, error } = await supabaseClient
+    .from("alumnos")
+    .select("documento_url")
+    .eq("numero_cuenta", numeroCuenta)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Error verificando documento:", error);
+    return;
+  }
+
+  if (data?.documento_url) {
+    documentoExistente = data.documento_url;
+    mostrarDocumentoExistente(documentoExistente);
+  }
+}
+
+function mostrarDocumentoExistente(url) {
+  const aviso = document.getElementById(
+    "documentoExistenteAviso"
+  );
+
+  const uploadZone =
+    document.getElementById("uploadZone");
+
+  fileName.innerHTML = `
+    <strong>Documento institucional existente cargado</strong><br>
+    <a href="${url}" target="_blank">Ver documento actual</a>
+  `;
+
+  aviso.style.display = "block";
+
+  aviso.innerHTML = `
+    Si tu documentación no cambió, puedes continuar sin subir uno nuevo.
+  `;
+
+  confirmacionDocs.checked = true;
+
+  uploadZone.querySelector("h3").textContent =
+    "Documento institucional ya registrado";
+
+  uploadZone.querySelector("p").textContent =
+    "Selecciona otro PDF solo si deseas actualizarlo";
+
+  subirBtn.textContent =
+    "Continuar con documento actual";
+
+  validarFormularioDocumentos();
+}
+
 /* =========================
    VALIDAR BOTÓN
 ========================= */
@@ -20,9 +73,12 @@ function validarFormularioDocumentos() {
   const file = pdfFileInput.files[0];
 
   const archivoValido =
+  documentoExistente ||
+  (
     file &&
     file.type === "application/pdf" &&
-    file.size <= MAX_FILE_SIZE;
+    file.size <= MAX_FILE_SIZE
+  );
 
   const confirmado =
     confirmacionDocs &&
@@ -91,13 +147,37 @@ if (confirmacionDocs) {
 /* =========================
    SUBMIT
 ========================= */
+
+/* =========================
+   SUBMIT
+========================= */
 documentosForm.addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const file = pdfFileInput.files[0];
 
+  // Si ya existe documento y no quiere subir uno nuevo
+  if (documentoExistente && !file) {
+    const { error: updateError } = await supabaseClient
+      .from("alumnos")
+      .update({
+        estado_registro: "completo"
+      })
+      .eq("numero_cuenta", numeroCuenta);
+
+    if (updateError) {
+      console.error(updateError);
+      errorDocs.textContent =
+        "No se pudo finalizar el registro.";
+      return;
+    }
+
+    window.location.href = "resumen.html";
+    return;
+  }
+
   // Validación archivo
-  if (!file) {
+  if (!file && !documentoExistente) {
     errorDocs.textContent =
       "Debes seleccionar tu archivo PDF completo.";
     return;
@@ -111,14 +191,14 @@ documentosForm.addEventListener("submit", async (e) => {
   }
 
   // Validación PDF
-  if (file.type !== "application/pdf") {
+  if (file && file.type !== "application/pdf") {
     errorDocs.textContent =
       "Solo se permiten archivos en formato PDF.";
     return;
   }
 
   // Validación tamaño
-  if (file.size > MAX_FILE_SIZE) {
+  if (file && file.size > MAX_FILE_SIZE) {
     errorDocs.textContent =
       "El archivo supera el límite de 15MB.";
     return;
@@ -184,15 +264,12 @@ documentosForm.addEventListener("submit", async (e) => {
       return;
     }
 
-    // Guardar local
     localStorage.setItem(
       "nombreDocumento",
       file.name
     );
 
-    // Redirigir
-    window.location.href =
-      "resumen.html";
+    window.location.href = "resumen.html";
 
   } catch (err) {
     console.error(err);
@@ -204,7 +281,10 @@ documentosForm.addEventListener("submit", async (e) => {
   }
 });
 
+    
+
 /* =========================
    ESTADO INICIAL
 ========================= */
 subirBtn.disabled = true;
+verificarDocumentoExistente();

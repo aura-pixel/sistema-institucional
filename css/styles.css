@@ -26,6 +26,40 @@ body {
   color: white;
 }
 
+#modalMensajeBtn {
+  display: block;
+  margin: 25px auto 0;
+  padding: 14px 32px;
+  background: linear-gradient(
+    135deg,
+    #006b4f,
+    #008f6b
+  );
+  color: white;
+  border: none;
+  border-radius: 14px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 180px;
+  box-shadow: 0 8px 20px
+    rgba(0, 0, 0, 0.25);
+}
+
+#modalMensajeBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px
+    rgba(0, 0, 0, 0.3);
+  filter: brightness(1.05);
+}
+
+#modalMensajeBtn:active {
+  transform: scale(0.98);
+}
+
+
+
 /* NAV */
 .top-nav {
   width: min(92%, 1400px);
@@ -249,26 +283,48 @@ body {
   margin-bottom: 30px;
 }
 
-/* FILTROS */
-.dashboard-filters {
-  display: grid;
-  grid-template-columns: 2.2fr 1fr 1fr;
-  gap: 16px;
-  margin: 30px 0;
-}
-
+/* =========================
+   FILTROS DASHBOARD PREMIUM
+========================= */
 .dashboard-filters input,
 .dashboard-filters select {
   width: 100%;
-  min-height: 58px;
-  padding: 0 18px;
-  border: none;
-  outline: none;
-  border-radius: 18px;
-  background: rgba(255,255,255,0.92);
+  padding: 14px 18px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.08);
+  color: white;
   font-size: 1rem;
-  color: #1f2937;
+  outline: none;
+  backdrop-filter: blur(8px);
+  transition: all 0.3s ease;
+
+  /* QUITAR ESTILO NATIVO */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
 }
+
+.dashboard-filters {
+  display: grid;
+  grid-template-columns: 1.4fr 0.9fr 0.9fr;
+  gap: 14px;
+  align-items: center;
+  margin: 18px 0 24px;
+}
+
+/* Dropdown desplegable */
+.dashboard-filters select {
+  cursor: pointer;
+}
+
+/* Opciones internas */
+.dashboard-filters select option {
+  background: #d9d4b0;
+  color: #1f3d2b;
+  padding: 10px;
+}
+
 
 /* GESTIÓN GENERACIÓN */
 .dashboard-generation-box {

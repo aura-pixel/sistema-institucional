@@ -188,34 +188,30 @@ verificarSesionCoordinador();
 // =========================
 // MODAL MENSAJE
 // =========================
-function mostrarModalMensaje(
-  mensaje
-) {
-  const modal =
-    document.getElementById(
-      "modalMensaje"
-    );
+function mostrarModalMensaje(mensaje) {
+  const modal = document.getElementById("modalMensaje");
+  const texto = document.getElementById("modalMensajeTexto");
+  const boton = document.getElementById("modalMensajeBtn");
 
-  const texto =
-    document.getElementById(
-      "modalMensajeTexto"
-    );
-
-  if (!modal || !texto) {
+  if (!modal || !texto || !boton) {
     alert(mensaje);
     return;
   }
 
   texto.textContent = mensaje;
+  boton.textContent = "Entendido";
 
-  modal.classList.remove(
-    "hidden"
-  );
+  // Cerrar con botón
+  boton.onclick = () => {
+    modal.classList.add("hidden");
+  };
 
+  // Mostrar modal
+  modal.classList.remove("hidden");
+
+  // Cerrar automáticamente
   setTimeout(() => {
-    modal.classList.add(
-      "hidden"
-    );
+    modal.classList.add("hidden");
   }, 4000);
 }
 
